@@ -9,6 +9,7 @@ from habitat import Config, Env, RLEnv, VectorEnv, make_dataset
 
 from agents.sem_exp import Sem_Exp_Env_Agent
 from .objectgoal_env import ObjectGoal_Env
+from .semantic_scene import HM3D_Env
 
 from .utils.vector_env import VectorEnv
 
@@ -24,6 +25,9 @@ def make_env_fn(args, config_env, rank):
                                 config_env=config_env,
                                 dataset=dataset
                                 )
+    elif args.agent == "hm3d_exp":
+        env = HM3D_Env(args=args, rank=rank, config_env=config_env,
+                       dataset=dataset)
     else:
         env = ObjectGoal_Env(args=args, rank=rank,
                              config_env=config_env,
@@ -34,12 +38,14 @@ def make_env_fn(args, config_env, rank):
     return env
 
 
-def _get_scenes_from_folder(content_dir):
-    scene_dataset_ext = ".glb.json.gz"
+def _get_scenes_from_folder(content_dir, scene_dataset_ext=".glb.json.gz"):
     scenes = []
     for filename in os.listdir(content_dir):
         if filename.endswith(scene_dataset_ext):
-            scene = filename[: -len(scene_dataset_ext) + 4]
+            if 'glb' in scene_dataset_ext:
+                scene = filename[: -len(scene_dataset_ext) + 4]
+            else:
+                scene = filename[: -len(scene_dataset_ext)]
             scenes.append(scene)
     scenes.sort()
     return scenes
@@ -63,7 +69,10 @@ def construct_envs(args):
     if "*" in basic_config.DATASET.CONTENT_SCENES:
         content_dir = os.path.join(basic_config.DATASET.EPISODES_DIR.format(
             split=args.split), "content")
-        scenes = _get_scenes_from_folder(content_dir)
+        if args.agent == 'sem_exp':
+            scenes = _get_scenes_from_folder(content_dir)
+        elif args.agent == 'hm3d_exp':
+            scenes = _get_scenes_from_folder(content_dir, scene_dataset_ext=".json.gz")
 
     if len(scenes) > 0:
         assert len(scenes) >= args.num_processes, (
@@ -100,9 +109,7 @@ def construct_envs(args):
         agent_sensors = []
         agent_sensors.append("RGB_SENSOR")
         agent_sensors.append("DEPTH_SENSOR")
-        # agent_sensors.append("SEMANTIC_SENSOR")
-
-        config_env.SIMULATOR.AGENT_0.SENSORS = agent_sensors
+        agent_sensors.append("SEMANTIC_SENSOR")
 
         # Reseting episodes manually, setting high max episode length in sim
         config_env.ENVIRONMENT.MAX_EPISODE_STEPS = 10000000
@@ -120,11 +127,11 @@ def construct_envs(args):
         config_env.SIMULATOR.DEPTH_SENSOR.MAX_DEPTH = args.max_depth
         config_env.SIMULATOR.DEPTH_SENSOR.POSITION = [0, args.camera_height, 0]
 
-        # config_env.SIMULATOR.SEMANTIC_SENSOR.WIDTH = args.env_frame_width
-        # config_env.SIMULATOR.SEMANTIC_SENSOR.HEIGHT = args.env_frame_height
-        # config_env.SIMULATOR.SEMANTIC_SENSOR.HFOV = args.hfov
-        # config_env.SIMULATOR.SEMANTIC_SENSOR.POSITION = \
-        #     [0, args.camera_height, 0]
+        config_env.SIMULATOR.SEMANTIC_SENSOR.WIDTH = args.env_frame_width
+        config_env.SIMULATOR.SEMANTIC_SENSOR.HEIGHT = args.env_frame_height
+        config_env.SIMULATOR.SEMANTIC_SENSOR.HFOV = args.hfov
+        config_env.SIMULATOR.SEMANTIC_SENSOR.POSITION = \
+            [0, args.camera_height, 0]
 
         config_env.SIMULATOR.TURN_ANGLE = args.turn_angle
         config_env.DATASET.SPLIT = args.split

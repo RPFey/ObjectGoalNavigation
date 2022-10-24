@@ -80,9 +80,9 @@ def get_args():
                         help="horizontal field of view in degrees")
     parser.add_argument('--turn_angle', type=float, default=30,
                         help="Agent turn angle in degrees")
-    parser.add_argument('--min_depth', type=float, default=0.5,
+    parser.add_argument('--min_depth', type=float, default=0.1,
                         help="Minimum depth for depth sensor in meters")
-    parser.add_argument('--max_depth', type=float, default=5.0,
+    parser.add_argument('--max_depth', type=float, default=10.0,
                         help="Maximum depth for depth sensor in meters")
     parser.add_argument('--success_dist', type=float, default=1.0,
                         help="success distance threshold in meters")

@@ -81,7 +81,7 @@ class ObjectGoal_Env(habitat.RLEnv):
         """
 
         args = self.args
-        self.scene_path = self.habitat_env.sim.config.SCENE
+        self.scene_path = self.habitat_env.sim.config.sim_cfg.scene_id
         scene_name = self.scene_path.split("/")[-1].split(".")[0]
 
         if self.scene_path != self.last_scene_path:
@@ -160,7 +160,7 @@ class ObjectGoal_Env(habitat.RLEnv):
 
         args = self.args
 
-        self.scene_path = self.habitat_env.sim.config.SCENE
+        self.scene_path = self.habitat_env.sim.config.sim_cfg.scene_id
         scene_name = self.scene_path.split("/")[-1].split(".")[0]
 
         scene_info = self.dataset_info[scene_name]
@@ -319,10 +319,10 @@ class ObjectGoal_Env(habitat.RLEnv):
 
         if new_scene:
             obs = super().reset()
-            self.scene_name = self.habitat_env.sim.config.SCENE
+            self.scene_name = self.habitat_env.sim.curr_scene_name
             print("Changing scene: {}/{}".format(self.rank, self.scene_name))
 
-        self.scene_path = self.habitat_env.sim.config.SCENE
+        self.scene_path = self.habitat_env.sim.config.sim_cfg.scene_id
 
         if self.split == "val":
             obs = self.load_new_episode()
