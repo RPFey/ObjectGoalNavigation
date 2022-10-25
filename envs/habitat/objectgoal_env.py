@@ -111,6 +111,7 @@ class ObjectGoal_Env(habitat.RLEnv):
         scene_info = self.dataset_info[scene_name]
         sem_map = scene_info[floor_idx]['sem_map']
         map_obj_origin = scene_info[floor_idx]['origin']
+        self.map_area = (sem_map.sum(axis=0) > 0.).sum()
 
         # Setup ground truth planner
         object_boundary = args.success_dist
@@ -364,6 +365,7 @@ class ObjectGoal_Env(habitat.RLEnv):
             action = 3
 
         obs, rew, done, _ = super().step(action)
+        assert obs['rgb'].max() > 0, "No visual input !"
 
         # Get pose change
         dx, dy, do = self.get_pose_change()
@@ -373,9 +375,15 @@ class ObjectGoal_Env(habitat.RLEnv):
         spl, success, dist = 0., 0., 0.
         if done:
             spl, success, dist = self.get_metrics()
+            self.info['map_area'] = self.map_area
             self.info['distance_to_goal'] = dist
             self.info['spl'] = spl
             self.info['success'] = success
+            self.info['start_distance'] = self.starting_distance
+            if self.stopped:
+                self.info['stop_by_agent'] = True
+            else:
+                self.info['stop_by_agent'] = False
 
         rgb = obs['rgb'].astype(np.uint8)
         depth = obs['depth']

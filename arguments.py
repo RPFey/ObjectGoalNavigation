@@ -80,9 +80,9 @@ def get_args():
                         help="horizontal field of view in degrees")
     parser.add_argument('--turn_angle', type=float, default=30,
                         help="Agent turn angle in degrees")
-    parser.add_argument('--min_depth', type=float, default=0.1,
+    parser.add_argument('--min_depth', type=float, default=0.5,
                         help="Minimum depth for depth sensor in meters")
-    parser.add_argument('--max_depth', type=float, default=10.0,
+    parser.add_argument('--max_depth', type=float, default=5.0,
                         help="Maximum depth for depth sensor in meters")
     parser.add_argument('--success_dist', type=float, default=1.0,
                         help="success distance threshold in meters")
@@ -197,9 +197,9 @@ def get_args():
                     """Insufficient GPU memory for evaluation"""
 
             if num_gpus == 1:
-                args.num_processes_on_first_gpu = num_processes_on_first_gpu
+                args.num_processes_on_first_gpu = min(num_processes_on_first_gpu, args.num_processes)
                 args.num_processes_per_gpu = 0
-                args.num_processes = num_processes_on_first_gpu
+                args.num_processes = args.num_processes_on_first_gpu
                 assert args.num_processes > 0, "Insufficient GPU memory"
             else:
                 num_threads = num_processes_per_gpu * (num_gpus - 1) \

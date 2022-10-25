@@ -397,6 +397,7 @@ class HM3D_Env(habitat.RLEnv):
         return obs, self.info
 
     def _preprocess_obs(self, obs):
+        """ Process instance segmentation to create semantic image """
         rgb = obs['rgb']
         self.rgb_vis = rgb[:, :, ::-1]
 
@@ -486,6 +487,7 @@ class HM3D_Env(habitat.RLEnv):
         dx, dy, do = pu.get_rel_pose_change(
             curr_sim_pose, self.last_sim_location)
 
+        # TODO difference between HM3D & Gibson / No idea why
         dx = -1 * dx
         dy = -1 * dy
         self.last_sim_location = curr_sim_pose
@@ -503,6 +505,7 @@ class HM3D_Env(habitat.RLEnv):
                         (See https://arxiv.org/pdf/2007.00643.pdf)
         """
         dist = self._env.task.measurements.get_metrics()['distance_to_goal']
+        # TODO the success threshold is set to 1.0
         if dist <= 1.0:
             success = 1
         else:

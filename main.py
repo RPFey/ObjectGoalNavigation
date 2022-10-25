@@ -55,10 +55,16 @@ def main():
         episode_success = []
         episode_spl = []
         episode_dist = []
+        episode_ratio = []
+        stop_by_agent = []
+        start_distance = []
         for _ in range(args.num_processes):
             episode_success.append(deque(maxlen=num_episodes))
             episode_spl.append(deque(maxlen=num_episodes))
             episode_dist.append(deque(maxlen=num_episodes))
+            episode_ratio.append(deque(maxlen=num_episodes))
+            stop_by_agent.append(deque(maxlen=num_episodes))
+            start_distance.append(deque(maxlen=num_episodes))
 
     else:
         episode_success = deque(maxlen=1000)
@@ -355,12 +361,17 @@ def main():
                 spl = infos[e]['spl']
                 success = infos[e]['success']
                 dist = infos[e]['distance_to_goal']
+                search_ratio = full_map[e, 1].sum().item() / infos[e]['map_area']
+                
                 spl_per_category[infos[e]['goal_name']].append(spl)
                 success_per_category[infos[e]['goal_name']].append(success)
                 if args.eval:
                     episode_success[e].append(success)
                     episode_spl[e].append(spl)
                     episode_dist[e].append(dist)
+                    episode_ratio[e].append(search_ratio)
+                    stop_by_agent[e].append(infos[e]['stop_by_agent'])
+                    start_distance[e].append(infos[e]['start_distance'])
                     if len(episode_success[e]) == num_episodes:
                         finished[e] = 1
                 else:
@@ -651,13 +662,19 @@ def main():
         total_success = []
         total_spl = []
         total_dist = []
+        total_episode_ratio = []
+        total_stop_by_agent = []
+        total_start_distance = []
         for e in range(args.num_processes):
-            for acc in episode_success[e]:
+            for (acc, dist, spl, ratio, stop, start_dist) in \
+                    zip(episode_success[e], episode_dist[e], episode_spl[e], episode_ratio[e], stop_by_agent[e], start_distance[e]):
+
                 total_success.append(acc)
-            for dist in episode_dist[e]:
                 total_dist.append(dist)
-            for spl in episode_spl[e]:
                 total_spl.append(spl)
+                total_episode_ratio.append(ratio)
+                total_stop_by_agent.append(stop)
+                total_start_distance.append(start_dist)
 
         if len(total_spl) > 0:
             log = "Final ObjectNav succ/spl/dtg:"
@@ -690,6 +707,12 @@ def main():
                 dump_dir, args.split), 'w') as f:
             json.dump(success_per_category, f)
 
+        total_episode_ratio = np.array(total_episode_ratio)
+        total_success = np.array(total_success)
+        total_stop_by_agent = np.array(total_stop_by_agent)
+        total_start_distance = np.array(total_start_distance)
+        np.savez('{}/{}_stats.npz'.format(dump_dir, args.split), 
+                  ratio = total_episode_ratio, success = total_success, stop_by_agent=total_stop_by_agent,  start_dist=total_start_distance)
 
 if __name__ == "__main__":
     main()
