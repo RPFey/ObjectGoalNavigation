@@ -1,43 +1,11 @@
-scenes = {}
-scenes["train"] = [
-    'Allensville',
-    'Beechwood',
-    'Benevolence',
-    'Coffeen',
-    'Cosmos',
-    'Forkland',
-    'Hanson',
-    'Hiteman',
-    'Klickitat',
-    'Lakeville',
-    'Leonardo',
-    'Lindenwood',
-    'Marstons',
-    'Merom',
-    'Mifflinburg',
-    'Newfields',
-    'Onaga',
-    'Pinesdale',
-    'Pomaria',
-    'Ranchester',
-    'Shelbyville',
-    'Stockman',
-    'Tolstoy',
-    'Wainscott',
-    'Woodbine',
-]
-
-scenes["val"] = [
-    'Collierville',
-    'Corozal',
-    'Darden',
-    'Markleeville',
-    'Wiconisco',
-]
-
 coco_categories = {
     "chair": 0,
+    
     "couch": 1,
+    "sofa": 1,
+    "sofa couch": 1,
+    "long sofa": 1,
+
     "potted plant": 2,
     "bed": 3,
     "toilet": 4,

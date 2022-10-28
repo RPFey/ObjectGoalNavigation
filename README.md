@@ -132,8 +132,13 @@ wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=171Z
 ### For evaluation: 
 
 For evaluating the pre-trained model:
-```
-python main.py --split val --eval 1 --load pretrained_models/sem_exp.pth
+
+```bash
+# HM3D-Semantics
+python main.py --eval 1 --split val -n 3 --agent hm3d_exp --task_config tasks/objectnav_hm3d.yaml --version v1 --total_num_scenes 1 --load pretrained_models/sem_exp.pth
+
+# HM3D-Semantics
+python main.py --eval 1 --split val -n 1 --agent hm3d_sem_exp --task_config tasks/objectnav_hm3d.yaml --version v1 --total_num_scenes 1 --load pretrained_models/sem_exp.pth
 ```
 
 For visualizing the agent observations and predicted semantic map, add `-v 1` as an argument to the above command.

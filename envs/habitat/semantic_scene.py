@@ -15,6 +15,7 @@ from envs.utils.fmm_planner import FMMPlanner
 import envs.utils.pose as pu
 import agents.utils.visualization as vu
 from constants import color_palette, coco_categories
+from agents.utils.semantic_prediction import SemanticPredMaskRCNN
 
 class HM3D_Env(habitat.RLEnv):
     def __init__(self, args, rank, config_env, dataset):
@@ -354,8 +355,13 @@ class HM3D_Env(habitat.RLEnv):
         args = self.args
 
         obs = super().reset()
+        # Switch if the target is not in
+        while self._env.current_episode.object_category not in coco_categories.keys():
+            obs = super().reset()
         obs = self._preprocess_obs(obs)
-        
+        bounds = self._env.sim.pathfinder.get_bounds()[0]
+        self.map_area = bounds[0] * bounds[2] * 1e4 # cm*cm
+
         # Reset Attributes
         self.stopped = False
         self.path_length = 0.
@@ -474,6 +480,12 @@ class HM3D_Env(habitat.RLEnv):
             self.info['distance_to_goal'] = dist
             self.info['spl'] = spl
             self.info['success'] = success
+            self.info['start_distance'] = self.starting_distance
+            self.info['map_area'] = self.map_area
+            if self.stopped:
+                self.info['stop_by_agent'] = True
+            else:
+                self.info['stop_by_agent'] = False
 
         self.info['time'] += 1
         return obs, rew, done, self.info
@@ -547,6 +559,46 @@ class HM3D_Env(habitat.RLEnv):
         """This function is not used, Habitat-RLEnv requires this function"""
         info = {}
         return info
+
+class HM3D_SemExp(HM3D_Env):
+    def __init__(self, args, rank, config_env, dataset):
+        super().__init__(args, rank, config_env, dataset)
+        # initialize semantic segmentation prediction model
+        if args.sem_gpu_id == -1:
+            args.sem_gpu_id = config_env.SIMULATOR.HABITAT_SIM_V0.GPU_DEVICE_ID
+            
+        self.sem_pred = SemanticPredMaskRCNN(args)
+
+    def _get_sem_pred(self, rgb, use_seg=True):
+        if use_seg:
+            semantic_pred, self.rgb_vis = self.sem_pred.get_prediction(rgb)
+            semantic_pred = semantic_pred.astype(np.float32)
+        else:
+            semantic_pred = np.zeros((rgb.shape[0], rgb.shape[1], 16))
+            self.rgb_vis = rgb[:, :, ::-1]
+        return semantic_pred
+
+    def _preprocess_obs(self, obs):
+        rgb = obs['rgb']
+        self.rgb_vis = rgb[:, :, ::-1]
+
+        depth = obs['depth']
+        depth = self._preprocess_depth(depth, self.args.min_depth, self.args.max_depth)
+
+        semantic_map = self._get_sem_pred(
+            rgb.astype(np.uint8), use_seg=True)
+        
+        ds = self.args.env_frame_width // self.args.frame_width  # Downscaling factor
+        if ds != 1:
+            rgb = rgb[ds // 2::ds, ds // 2::ds]
+            depth = depth[ds // 2::ds, ds // 2::ds]
+            semantic_map = semantic_map[ds // 2::ds, ds // 2::ds]
+
+        depth = np.expand_dims(depth, axis=2)
+        state = np.concatenate((rgb, depth, semantic_map),
+                               axis=2).transpose(2, 0, 1)
+
+        return state
 
 def _get_scenes_from_folder(content_dir):
     scene_dataset_ext = ".json.gz"

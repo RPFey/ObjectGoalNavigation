@@ -9,7 +9,7 @@ from habitat import Config, Env, RLEnv, VectorEnv, make_dataset
 
 from agents.sem_exp import Sem_Exp_Env_Agent
 from .objectgoal_env import ObjectGoal_Env
-from .semantic_scene import HM3D_Env
+from .semantic_scene import HM3D_Env, HM3D_SemExp
 
 from .utils.vector_env import VectorEnv
 
@@ -27,6 +27,9 @@ def make_env_fn(args, config_env, rank):
                                 )
     elif args.agent == "hm3d_exp":
         env = HM3D_Env(args=args, rank=rank, config_env=config_env,
+                       dataset=dataset)
+    elif args.agent == "hm3d_sem_exp":
+        env = HM3D_SemExp(args=args, rank=rank, config_env=config_env,
                        dataset=dataset)
     else:
         env = ObjectGoal_Env(args=args, rank=rank,
@@ -71,7 +74,7 @@ def construct_envs(args):
             split=args.split), "content")
         if args.agent == 'sem_exp':
             scenes = _get_scenes_from_folder(content_dir)
-        elif args.agent == 'hm3d_exp':
+        elif 'hm3d' in args.agent:
             scenes = _get_scenes_from_folder(content_dir, scene_dataset_ext=".json.gz")
 
     if len(scenes) > 0:
