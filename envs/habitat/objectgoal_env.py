@@ -365,7 +365,6 @@ class ObjectGoal_Env(habitat.RLEnv):
             action = 3
 
         obs, rew, done, _ = super().step(action)
-        assert obs['rgb'].max() > 0, "No visual input !"
 
         # Get pose change
         dx, dy, do = self.get_pose_change()

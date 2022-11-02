@@ -97,7 +97,7 @@ def main():
     # 2. Exploread Area
     # 3. Current Agent Location
     # 4. Past Agent Locations
-    # 5,6,7,.. : Semantic Categories
+    # 5,6,7,.. : 15 Semantic Categories + 1 Free Space ... 
     nc = args.num_sem_categories + 4  # num channels
 
     # Calculating full and local map sizes
@@ -414,6 +414,8 @@ def main():
                 else:
                     update_intrinsic_rew(e)
 
+                # Copy the value from local map to global map 
+                # TODO: Other methods to fuse them
                 full_map[e, :, lmb[e, 0]:lmb[e, 1], lmb[e, 2]:lmb[e, 3]] = \
                     local_map[e]
                 full_pose[e] = local_pose[e] + \

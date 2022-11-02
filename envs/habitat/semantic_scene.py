@@ -467,7 +467,16 @@ class HM3D_Env(habitat.RLEnv):
             # Not sending stop to simulator, resetting manually
             action = 3
 
-        obs, rew, done, _ = super().step(action)
+        agent_state_h = self._env.sim.get_agent_state().position[1]
+        start_positio_h = self.habitat_env.current_episode.start_position[1]
+        
+        if abs(agent_state_h - start_positio_h) < 0.3:
+            obs, rew, done, _ = super().step(action)
+        else:
+            self._env.sim.set_agent_state(self.habitat_env.current_episode.start_position, self.habitat_env.current_episode.start_rotation)
+            obs = self._env.sim.get_observations_at(self.habitat_env.current_episode.start_position, self.habitat_env.current_episode.start_rotation)
+            rew = -1
+            done = False
 
         # Get pose change
         dx, dy, do = self.get_pose_change()
